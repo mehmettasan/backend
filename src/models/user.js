@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
 const UserSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
+  username: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   registrationDate: { type: Date, default: Date.now },
@@ -13,7 +13,8 @@ const UserSchema = new mongoose.Schema({
   pendingWithdraw: { type: Array, default: [] },
   server: { type: String, default: "" },
   isVerifiedAccount: { type: Boolean, default: false },
-  emailVerificitonLink:{type:String , default:""}
+  emailVerificitionLink:{type:String , default:""},
+  forgotPassword:{type:String , default:""}
 });
 
 // Şifreyi kaydetmeden önce hash'ler
