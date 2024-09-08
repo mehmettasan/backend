@@ -7,6 +7,18 @@ require("dotenv").config();
 exports.register = async (req, res) => {
   try {
     const { username, email, password, server } = req.body;
+
+    const existingUsername = await User.findOne({ username,server });
+    if (existingUsername) {
+      return res.status(400).json({ error: "Bu kullanıcı adı bu sunucuda zaten kullanılıyor.\n Eğer bu sizin kullanıcı adınız ise lütfen bizimle iletişime geçiniz." });
+    }
+
+    // E-postanın mevcut olup olmadığını kontrol edin
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      return res.status(400).json({ error: "Bu e-posta adresi zaten kullanılıyor.\n Giriş yapabilirsiniz..." });
+    }
+
     // Kullanıcıyı oluşturun
     const user = new User({
       username,
@@ -27,7 +39,23 @@ exports.register = async (req, res) => {
       { expiresIn: "30d" }
     );
 
-    // Doğrulama linki oluşturun ve kullanıcıya kaydedin
+    // Doğrudan JWT token ile yanıt verin
+    res.status(200).json({
+      message: "Kayıt başarılı!",
+      token: token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Bir hata oluştu." });
+  }
+};
+
+//E posta doğrulama için eklenecek kısım
+/*  // Doğrulama linki oluşturun ve kullanıcıya kaydedin
     const verificationLink = `http://localhost:3000/verify-email?token=${token}`;
     user.emailVerificitionLink = verificationLink;
     await user.save();
@@ -40,15 +68,8 @@ exports.register = async (req, res) => {
       text: `Lütfen e-posta adresinizi doğrulamak için aşağıdaki bağlantıya tıklayın:\n\n${verificationLink}`,
     };
 
-    await transporter.sendMail(mailOptions);
-
-    res.status(200).json({
-      message: "Kayıt başarılı! Lütfen e-posta adresinizi doğrulayın.",
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Bir hata oluştu." });
-  }
-};
+    transporter.sendMail(mailOptions);
+    */
 
 exports.eMailVerificition = async (req, res) => {
   const { token } = req.query;
@@ -67,7 +88,7 @@ exports.eMailVerificition = async (req, res) => {
         .json({ error: "Geçersiz veya süresi dolmuş doğrulama bağlantısı." });
     }
 
-    user.isVerifiedAccount = true;
+    user.isEmailVerified = true;
     user.emailVerificitionLink = ""; // Doğrulama linkini temizle
     await user.save();
 
@@ -142,7 +163,7 @@ exports.forgotPassword = async (req, res) => {
       text: `Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:\n\n${resetLink}`,
     };
 
-    await transporter.sendMail(mailOptions);
+    transporter.sendMail(mailOptions);
 
     res.status(200).json({
       message: "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi!",

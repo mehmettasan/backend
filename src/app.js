@@ -10,7 +10,8 @@ database();
 
 app.use(bodyParser.json());
 
-app.use("/auth",routes.authRoute)
+app.use("/api/auth",routes.authRoute)
+app.use('/api/items', routes.itemRoute);
 
 
 app.listen(process.env.PORT,()=>{
